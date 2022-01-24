@@ -16,8 +16,8 @@ https://youtu.be/aGfQHL1jU4I
 - MCP4725 module
 
 ### Circuit Diagram
-![Schematic](_images/Raspberry Pi Pico Midi to CV Interface_schem.png)
-![Breadboard](_images/Raspberry Pi Pico Midi to CV Interface_bb.png)
+![Breadboard](_images/Raspberry-Pi-Pico-Midi-to-CV-Interface_bb.png)
+![Schematic](_images/Raspberry-Pi-Pico-Midi-to-CV-Interface_schem.png)
 
 ## The Code
 The code is written in Micropython. Its only external dependency is the [SimpleMIDIDecoder](https://diyelectromusic.wordpress.com/2021/06/13/raspberry-pi-pico-midi-channel-router/) class by [@diyelectromusic](https://twitter.com/diyelectromusic). You can download the latest version on GitHub here: [SimpleMIDIDecoder.py](https://github.com/diyelectromusic/sdemp/blob/master/src/SDEMP/Micropython/SimpleMIDIDecoder.py).
