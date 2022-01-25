@@ -8,8 +8,11 @@
 #
 #
 # Wiring:
-# serial midi input on GP1 (UART0 RX)
+# serial midi input: GP1 (UART0 RX)
+# neopixels:         GP16
 # gate output: GP17
+# calibration pot:   GP26 (A0), GND, 3.3v
+# LDR:               GP27 (A1), 3.3V
 #
 # MCP4725   Pico
 # GND       GND
