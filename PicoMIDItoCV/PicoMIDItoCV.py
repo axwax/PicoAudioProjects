@@ -19,7 +19,7 @@
 # VCC       VBUS (5V)
 # SDA       GP6
 # SCL       GP7
-# VOUT is the CV output
+# VOUT      CV output to synth
 
 import machine
 import time
