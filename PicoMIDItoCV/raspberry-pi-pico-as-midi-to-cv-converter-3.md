@@ -16,8 +16,8 @@ https://youtu.be/aGfQHL1jU4I
 - MCP4725 module
 
 ### Circuit Diagram
-![Breadboard](https://raw.githubusercontent.com/axwax/PicoAudioProjects/master/PicoMIDItoCV/_images/Raspberry-Pi-Pico-Midi-to-CV-Interface_bb.png)
-![Schematic](https://raw.githubusercontent.com/axwax/PicoAudioProjects/master/PicoMIDItoCV/_images/Raspberry-Pi-Pico-Midi-to-CV-Interface_schem.png)
+![Breadboard](/_images/Raspberry-Pi-Pico-Midi-to-CV-Interface_bb.png)
+![Schematic](/_images/Raspberry-Pi-Pico-Midi-to-CV-Interface_schem.png)
 
 ## The Code
 The code is written in Micropython. Its external dependencies are:
