@@ -58,8 +58,8 @@ gate = machine.Pin(17, machine.Pin.OUT)
 gate.value(0)
 
 #create an I2C bus
-sda=machine.Pin(6)
-scl=machine.Pin(7)
+sda=machine.Pin(2)
+scl=machine.Pin(3)
 i2c = machine.I2C(1, scl=scl, sda=sda, freq=400000)
 
 cutoff = 0
