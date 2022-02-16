@@ -101,7 +101,7 @@ def writeToDac(value,addr):
     i2c.writeto(addr,buf)
 
 # Initialise the serial MIDI handling
-uart = machine.UART(0,31250)
+uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pins 12,13
 
 # Calculate the control voltage
 def noteToVoltage(note):
