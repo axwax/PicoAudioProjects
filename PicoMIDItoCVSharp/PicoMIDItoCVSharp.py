@@ -179,6 +179,6 @@ while True:
     if (uart.any()):
         md.read(uart.read(1)[0])
     light_level = analog1_value.read_u16()
-    #calibration = analog0_value.read_u16()
+    calibration = analog0_value.read_u16()
     cutoff = light_level/16
     writeToDac(int(cutoff),0x63)
