@@ -6,17 +6,23 @@
 # the SimpleMIDIDecoder library by @diyelectromusic, which can be found at
 # https://diyelectromusic.wordpress.com/2021/06/13/raspberry-pi-pico-midi-channel-router/
 #
+# The NeoPixel code requires the pi_pico_neopixel library by Blaž Rolih
+# which can be found at https://github.com/blaz-r/pi_pico_neopixel
+#
 #
 # Wiring:
-# serial midi input on GP1 (UART0 RX)
+# serial midi input: GP13 (UART0 RX)
+# neopixels:         GP16, GND, 3.3v
 # gate output: GP17
+# calibration pot:   GP26 (A0), GND, 3.3v
+# distance sensor:   GP27 (A1), 3.3V
 #
-# MCP4725   Pico
-# GND       GND
-# VCC       VBUS (5V)
-# SDA       GP6
-# SCL       GP7
-# VOUT is the CV output
+# MCP4725 (CV1&2)    Pico
+# GND:               GND
+# VCC:               VBUS (5V)
+# SDA:               GP2
+# SCL:               GP3
+# VOUT: CV output to synth
 
 import machine
 import time
