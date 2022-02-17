@@ -140,28 +140,12 @@ def doMidiNoteOn(ch, cmd, note, vel):
 
 def doMidiNoteOff(ch, cmd, note, vel):
     gate.value(0)
-    #drawNote(note,5)
-
-def doMidiThru(ch, cmd, d1, d2):
-    global filterDepth
-    #if(cmd == 0xb0 and d1 == 74):
-    if(cmd == 0xb0 and d1 == 102): # lfo speed
-         #writeToDac(int(d2*32),0x63)
-         filterDepth = d2/40
-         print("filter",filterDepth)
-    elif(cmd != 0xf8):
-        print ("Thru ", ch, ":", hex(cmd), ":", d1, ":", d2)
-    #if (d2 == -1):
-        #uart.write(ustruct.pack("bb",cmd+ch,d1))
-    #else:
-        #uart.write(ustruct.pack("bbb",cmd+ch,d1,d2))
 
 
 # initialise MIDI decoder and set up callbacks
 md = SimpleMIDIDecoder.SimpleMIDIDecoder()
 md.cbNoteOn (doMidiNoteOn)
 md.cbNoteOff (doMidiNoteOff)
-md.cbThru (doMidiThru)
 
 # the loop
 while True:
