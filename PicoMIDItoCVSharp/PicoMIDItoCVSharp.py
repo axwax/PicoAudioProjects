@@ -28,28 +28,20 @@ import machine
 import time
 import ustruct
 import SimpleMIDIDecoder
-
 from neopixel import Neopixel
-numpix = 16
-neopin = 16
-strip = Neopixel(numpix, 0, neopin, "GRB")
 
+# set up Neopixel ring
+neopixel_count = 16
+neopixel_pin = 16
+strip = Neopixel(neopixel_count, 0, neopixel_pin, "GRB")
 black = (0, 0, 0)
-red = (255, 0, 0)
-orange = (255, 50, 0)
 yellow = (255, 100, 0)
 green = (0, 255, 0)
-blue = (0, 0, 255)
-indigo = (100, 0, 90)
-violet = (200, 0, 100)
-colors_rgb = [red, orange, yellow, green, blue, indigo, violet]
-colors = colors_rgb
-
 strip.brightness(50)
 strip.fill(black)
-strip.set_pixel_line_gradient(0, 0, green, yellow)
 strip.show()
 
+# set up analogue inputs
 analog0_value = machine.ADC(26)
 analog1_value = machine.ADC(27)
 analog2_value = machine.ADC(28)
