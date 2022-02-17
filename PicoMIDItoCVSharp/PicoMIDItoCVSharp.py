@@ -68,8 +68,6 @@ calibration = 13000
 def drawCV2(ax):
     global cutoff
     numLEDs = int(cutoff / 256)
-    ####print ("LEDS:",numLEDs)
-    #numLEDs = numLEDs+lowest_note+7
     drawCVNote(numLEDs, 10)
 
 timer = machine.Timer()
@@ -84,8 +82,6 @@ def drawCVNote(note, bright):
         note_pixels = note_pixels = 15
         
     note_pixels = 16-note_pixels    
-    
-    #print(note_pixels)
     strip.fill(black)
     if (note_pixels == 0):
         strip.set_pixel(0,black)
@@ -136,16 +132,10 @@ def drawNote(note, bright):
 def doMidiNoteOn(ch, cmd, note, vel):
     global light_level, filterDepth
     dacV = playNote(note)
-    #drawNote(note,20)
-    #print(dacV)
     cutoff = light_level/16
     if cutoff < 0:
         cutoff = 0
     writeToDac(int(cutoff),0x63)
-    #print("note:",note," calibration:",calibration," filter:",cutoff )
-    #filterV = 1000 - distance
-    #writeToDac(int((filterV)*filterDepth),0x63)
-    #print("V",(int((filterV)*filterDepth)))
     gate.value(1)
 
 def doMidiNoteOff(ch, cmd, note, vel):
@@ -165,7 +155,7 @@ def doMidiThru(ch, cmd, d1, d2):
         #uart.write(ustruct.pack("bb",cmd+ch,d1))
     #else:
         #uart.write(ustruct.pack("bbb",cmd+ch,d1,d2))
-    
+
 
 # initialise MIDI decoder and set up callbacks
 md = SimpleMIDIDecoder.SimpleMIDIDecoder()
