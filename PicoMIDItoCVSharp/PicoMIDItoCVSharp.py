@@ -122,21 +122,6 @@ def playNote(note):
     writeToDac(dacV,0x62)
     return dacV
 
-def drawNote(note, bright):
-    strip.brightness(bright)
-    note_pixels = note-lowest_note-12
-    if note_pixels < 0:
-        note_pixels = 0
-    if note_pixels > 13:
-        note_pixels = note_pixels - 12       
-    #print(note_pixels)
-    strip.fill(black)
-    if (note_pixels == 0):
-        strip.set_pixel(0,green)
-    else:
-        strip.set_pixel_line_gradient(0, note_pixels, green, yellow)
-    strip.show()
-
 # MIDI callback routines
 def doMidiNoteOn(ch, cmd, note, vel):    
     dacV = playNote(note)
