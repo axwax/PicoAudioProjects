@@ -60,6 +60,8 @@ sda=machine.Pin(2)
 scl=machine.Pin(3)
 i2c = machine.I2C(1, scl=scl, sda=sda, freq=400000)
 
+# initialise serial MIDI ports
+uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pins 12,13
 
 # timer callback functions:
 
@@ -105,9 +107,6 @@ def writeToDac(value,addr):
     buf[1]=value & 0xFF
     i2c.writeto(addr,buf)
     
-# Initialise the serial MIDI handling
-uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pins 12,13
-
 # Calculate the control voltage
 def noteToVoltage(note):
     global semitone,lowest_note
