@@ -41,27 +41,25 @@ strip.brightness(50)
 strip.fill(black)
 strip.show()
 
+# set up global variables
+calibration = 0    # calibration offset for reference voltage
+lowest_note = 40   # which MIDI note number corresponds to 0V CV
+old_num_pixels = 0 # previous number of neopixels shown
+
 # set up analogue inputs
 analog0_value = machine.ADC(26)
 analog1_value = machine.ADC(27)
 analog2_value = machine.ADC(28)
 
-# which MIDI note number corresponds to 0V CV
-lowest_note = 40
-
-filterDepth = 3
-
-# create gate pin
+# set up gate pin
 gate = machine.Pin(17, machine.Pin.OUT)
 gate.value(0)
 
-#create an I2C bus
+# set up I2C bus 1
 sda=machine.Pin(2)
 scl=machine.Pin(3)
 i2c = machine.I2C(1, scl=scl, sda=sda, freq=400000)
 
-cutoff = 0
-calibration = 13000
 
 def drawCV2(ax):
     global cutoff
