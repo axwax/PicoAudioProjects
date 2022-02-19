@@ -13,7 +13,7 @@
 # Wiring:
 # serial midi input: GP13 (UART0 RX)
 # neopixels:         GP16, GND, 3.3v
-# gate output: GP17
+# gate output:       GP17
 # calibration pot:   GP26 (A0), GND, 3.3v
 # distance sensor:   GP27 (A1), 3.3V
 #
@@ -61,29 +61,42 @@ scl=machine.Pin(3)
 i2c = machine.I2C(1, scl=scl, sda=sda, freq=400000)
 
 
-def drawCV2(ax):
-    global cutoff
-    numLEDs = int(cutoff / 256)
-    drawCVNote(numLEDs, 10)
+# timer callback functions:
 
-timer = machine.Timer()
-timer.init (freq = 20, mode = machine.Timer.PERIODIC, callback = drawCV2)
+# calibration
+def check_calibration_pot(t):
+    global calibration
+    calibration = analog0_value.read_u16()
 
-def drawCVNote(note, bright):
+# distance sensor
+def check_distance_sensor(t):
+    distance = analog1_value.read_u16() / 16  
+    writeToDac(int(distance),0x63)
+    #convert to number from 0 - 16
+    numLEDs = 16 - int(distance / 256)
+    neopixelDraw(numLEDs, 10)
+    
+# set up timers
+distance_timer = machine.Timer()
+distance_timer.init (period = 50, mode = machine.Timer.PERIODIC, callback = check_distance_sensor)
+calibration_timer = machine.Timer()
+calibration_timer.init (period = 100, mode = machine.Timer.PERIODIC, callback = check_calibration_pot)
+
+# draw to neopixel ring 
+def neopixelDraw (num_pixels, bright):
+    global old_num_pixels
     strip.brightness(bright)
-    note_pixels = note
-    if note_pixels < 0:
-        note_pixels = 0
-    if note_pixels > 15:
-        note_pixels = note_pixels = 15
-        
-    note_pixels = 16-note_pixels    
+    # only redraw if the value has changed
+    if(num_pixels == old_num_pixels or num_pixels > neopixel_count):
+        return
+    old_num_pixels = num_pixels
+    # draw the pixels
     strip.fill(black)
-    if (note_pixels == 0):
-        strip.set_pixel(0,black)
-    else:
-        strip.set_pixel_line_gradient(0, note_pixels-1, green, yellow)
-    strip.show()
+    if (num_pixels == 1):
+        strip.set_pixel(0,green)
+    elif (num_pixels > 1):
+        strip.set_pixel_line_gradient(0, num_pixels-1, green, yellow)
+    strip.show()  
 
 # DAC function
 def writeToDac(value,addr):
@@ -91,7 +104,7 @@ def writeToDac(value,addr):
     buf[0]=(value >> 8) & 0xFF
     buf[1]=value & 0xFF
     i2c.writeto(addr,buf)
-
+    
 # Initialise the serial MIDI handling
 uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pins 12,13
 
@@ -125,18 +138,12 @@ def drawNote(note, bright):
     strip.show()
 
 # MIDI callback routines
-def doMidiNoteOn(ch, cmd, note, vel):
-    global light_level, filterDepth
+def doMidiNoteOn(ch, cmd, note, vel):    
     dacV = playNote(note)
-    cutoff = light_level/16
-    if cutoff < 0:
-        cutoff = 0
-    writeToDac(int(cutoff),0x63)
-    gate.value(1)
+    gate.value(1)    
 
 def doMidiNoteOff(ch, cmd, note, vel):
     gate.value(0)
-
 
 # initialise MIDI decoder and set up callbacks
 md = SimpleMIDIDecoder.SimpleMIDIDecoder()
@@ -148,7 +155,3 @@ while True:
     # Check for MIDI messages
     if (uart.any()):
         md.read(uart.read(1)[0])
-    light_level = analog1_value.read_u16()
-    calibration = analog0_value.read_u16()
-    cutoff = light_level/16
-    writeToDac(int(cutoff),0x63)
