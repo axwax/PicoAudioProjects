@@ -109,13 +109,13 @@ def writeToDac(value,addr):
     
 # Calculate the control voltage
 def noteToVoltage(note):
-    global semitone,lowest_note
-    mv = (4096+(calibration / 128)) / 5 / 1000
-    semitone = 83.33 * mv
+    reference_voltage = (4.5 + (calibration / 65536)) # from 4.5V to 5.5V
+    mv = 4096 / reference_voltage / 1000 # value for one mV
+    semitone = 83.33 * mv # one semitone is 1V/12 = 83.33mV
     dacV = int((note-lowest_note)*semitone)
-    print("calib:",calibration, " V:",dacV)
     return dacV
 
+# output control voltage for note on CV1
 def playNote(note):
     dacV = noteToVoltage(note)
     writeToDac(dacV,0x62)
