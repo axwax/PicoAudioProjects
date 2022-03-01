@@ -55,10 +55,8 @@ analog2_value = machine.ADC(28)
 gate = machine.Pin(17, machine.Pin.OUT)
 gate.value(0)
 
-# set up I2C bus 1
-sda=machine.Pin(2)
-scl=machine.Pin(3)
-i2c = machine.I2C(1, scl=scl, sda=sda, freq=400000)
+# set up I2C bus 0 and 1
+i2c = [machine.I2C(0,sda=machine.Pin(8), scl=machine.Pin(9), freq=400000), machine.I2C(1,sda=machine.Pin(2), scl=machine.Pin(3), freq=400000)]
 
 # initialise serial MIDI ports
 uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pins 12,13
@@ -73,7 +71,7 @@ def check_calibration_pot(t):
 # distance sensor
 def check_distance_sensor(t):
     distance = analog1_value.read_u16() / 16  
-    writeToDac(int(distance),0x63)
+    writeToDac(int(distance),0x63,1)
     #convert to number from 0 - 16
     numLEDs = 16 - int(distance / 256)
     neopixelDraw(numLEDs, 10)
@@ -101,11 +99,11 @@ def neopixelDraw (num_pixels, bright):
     strip.show()  
 
 # DAC function
-def writeToDac(value,addr):
+def writeToDac(value,addr, i2cBus):
     buf=bytearray(2)
     buf[0]=(value >> 8) & 0xFF
     buf[1]=value & 0xFF
-    i2c.writeto(addr,buf)
+    i2c[i2cBus].writeto(addr,buf)
     
 # Calculate the control voltage
 def noteToVoltage(note):
@@ -118,7 +116,7 @@ def noteToVoltage(note):
 # output control voltage for note on CV1
 def playNote(note):
     dacV = noteToVoltage(note)
-    writeToDac(dacV,0x62)
+    writeToDac(dacV,0x62,1)
     return dacV
 
 # MIDI callback routines
