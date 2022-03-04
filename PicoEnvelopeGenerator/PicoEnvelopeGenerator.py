@@ -29,6 +29,9 @@ import time
 import ustruct
 import SimpleMIDIDecoder
 from neopixel import Neopixel
+from ulab import numpy as np
+import sys
+np.set_printoptions(threshold=sys.maxsize)
 
 # set up Neopixel ring
 neopixel_count = 16
@@ -64,8 +67,13 @@ uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pi
 envelope_pos = 0
 do_envelope = False
 start_envelope = False
+stop_envelope = False
+note_on = False # is a note played at the moment?
+sustain_level = 0
+release_length = 0
 #env = [1,2,4,8,16,12,10,8,8,8,8,6,4,2,2,1]
-env = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 2925, 2850, 2775, 2700, 2625, 2550, 2475, 2400, 2325, 2250, 2175, 2100, 2025, 1950, 1875, 1800, 1725, 1650, 1575, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1461, 1423, 1384, 1346, 1307, 1269, 1230, 1192, 1153, 1115, 1076, 1038, 999, 961, 923, 884, 846, 807, 769, 730, 692, 653, 615, 576, 538, 499, 461, 423, 384, 346, 307, 269, 230, 192, 153, 115, 76, 38, 0]
+ad_array = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 2925, 2850, 2775, 2700, 2625, 2550, 2475, 2400, 2325, 2250, 2175, 2100, 2025, 1950, 1875, 1800, 1725, 1650, 1575, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1461, 1423, 1384, 1346, 1307, 1269, 1230, 1192, 1153, 1115, 1076, 1038, 999, 961, 923, 884, 846, 807, 769, 730, 692, 653, 615, 576, 538, 499, 461, 423, 384, 346, 307, 269, 230, 192, 153, 115, 76, 38, 0]
+rel_array = []
 
 # timer callback functions:
 
@@ -82,28 +90,77 @@ def check_distance_sensor(t):
     numLEDs = 16 - int(distance / 256)
     neopixelDraw(numLEDs, 10)
 
+# envelope generator functions
+def attack_decay(attack_length = 30, decay_length = 20, sustain_level = 1500, full_level = 4000):
+    if(attack_length<2):
+        attack_arr = np.full((1, ), full_level, dtype=np.uint16)
+    else:
+        attack_arr = np.linspace(0, full_level, attack_length, endpoint = False, dtype=np.uint16)
+    if(decay_length<2):
+        decay_arr = np.full((1, ), sustain_level, dtype=np.uint16)
+    else:
+        decay_arr = np.linspace(full_level, sustain_level, decay_length, endpoint = False, dtype=np.uint16)
+    ad = np.concatenate((attack_arr, decay_arr), axis=0)
+    return ad
+
+def release (current_level = 1500, release_length = 40):
+    if(release_length<2):
+        release_arr = np.full((1, ), 0, dtype=np.uint16)
+    else:
+        release_arr = np.linspace(sustain_level, 0, release_length, dtype=np.uint16)
+    return release_arr
+
 # envelope
 def envelope(t):
     global start_envelope
+    global stop_envelope
     global do_envelope
     global envelope_pos
+    global release_pos
+    global ad_array
+    global rel_array
+    global release_length
+    global sustain_level
     if (start_envelope):
         envelope_pos = 0
+        release_pos = 0
+        attack_length = int(analog0_value.read_u16() / 100)
+        decay_length = int(analog1_value.read_u16() / 100)
+        sustain_level = 1000
+        release_length = 200
+        
+        
+        ad_array = attack_decay(attack_length, decay_length,sustain_level)
+        
+        print("attack",attack_length,"decay",decay_length,"sustain",sustain_level,"release",release_length)
         do_envelope = True
         start_envelope = False 
     if (do_envelope):
-        if (envelope_pos<len(env)):
-            envelope_pos = envelope_pos + 1
-        else:
-            do_envelope = False     
-        print(env[envelope_pos-1])
-        writeToDac(int(env[envelope_pos-1]),0x60,0)
+        if (note_on):
+            if (envelope_pos<len(ad_array)): # we're in the attack/decay section
+                envelope_pos = envelope_pos + 1
+                out = int(ad_array[envelope_pos-1])
+            else:
+                out = sustain_level # we're in the sustain section
+            
+        else: # we're in the release section
+            if(stop_envelope):
+                stop_envelope = False
+                rel_array = release(ad_array[envelope_pos-1],release_length)
+            if (release_pos<len(rel_array)-1):
+                release_pos = release_pos + 1
+                out = int(rel_array[release_pos])
+            else:
+                out = 0
+                do_envelope = False
+        writeToDac(out,0x60,0)
 
 # set up timers
-distance_timer = machine.Timer()
-distance_timer.init (period = 50, mode = machine.Timer.PERIODIC, callback = check_distance_sensor)
-calibration_timer = machine.Timer()
-calibration_timer.init (period = 100, mode = machine.Timer.PERIODIC, callback = check_calibration_pot)
+#distance_timer = machine.Timer()
+#distance_timer.init (period = 50, mode = machine.Timer.PERIODIC, callback = check_distance_sensor)
+if (not calibration): # only check the calibration pot if there isn't a hard coded calibration value
+    calibration_timer = machine.Timer()
+    calibration_timer.init (period = 100, mode = machine.Timer.PERIODIC, callback = check_calibration_pot)
 envelope_timer = machine.Timer()
 envelope_timer.init (period = 2, mode = machine.Timer.PERIODIC, callback = envelope)
 
@@ -152,12 +209,17 @@ def playNote(note):
     return dacV
 
 # MIDI callback routines
-def doMidiNoteOn(ch, cmd, note, vel):    
+def doMidiNoteOn(ch, cmd, note, vel):
+    global note_on    
     dacV = playNote(note)
-    gate.value(1)    
+    gate.value(1)
+    note_on = True
 
 def doMidiNoteOff(ch, cmd, note, vel):
+    global note_on,stop_envelope
     gate.value(0)
+    note_on = False
+    stop_envelope = True
     #playNote(0)
 
 def doMidiThru(ch, cmd, d1, d2):
