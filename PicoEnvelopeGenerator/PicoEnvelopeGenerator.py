@@ -32,6 +32,7 @@ from neopixel import Neopixel
 from ulab import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
+from mcp3008 import MCP3008
 
 # set up Neopixel ring
 neopixel_count = 16
@@ -54,8 +55,13 @@ analog0_value = machine.ADC(26)
 analog1_value = machine.ADC(27)
 analog2_value = machine.ADC(28)
 
+# set up 10-bit analogue inputs
+spi = machine.SPI(0, sck=machine.Pin(18),mosi=machine.Pin(19),miso=machine.Pin(16), baudrate=100000)
+cs = machine.Pin(17, machine.Pin.OUT)
+chip = MCP3008(spi, cs)
+
 # set up gate pin
-gate = machine.Pin(17, machine.Pin.OUT)
+gate = machine.Pin(21, machine.Pin.OUT)
 gate.value(0)
 
 # set up I2C bus 0 and 1
@@ -122,19 +128,21 @@ def envelope(t):
     global release_length
     global sustain_level
     if (start_envelope):
+        
         envelope_pos = 0
         release_pos = 0
-        attack_length = int(analog0_value.read_u16() / 100)
-        decay_length = int(analog1_value.read_u16() / 100)
-        sustain_level = 1000
-        release_length = 200
         
+        attack_length  = int(chip.read(7) / 4)
+        decay_length   = int(chip.read(6) / 4)
+        sustain_level  = int(chip.read(5) * 4)
+        release_length = int(chip.read(4) / 4 )
         
         ad_array = attack_decay(attack_length, decay_length,sustain_level)
         
         print("attack",attack_length,"decay",decay_length,"sustain",sustain_level,"release",release_length)
         do_envelope = True
-        start_envelope = False 
+        start_envelope = False
+        
     if (do_envelope):
         if (note_on):
             if (envelope_pos<len(ad_array)): # we're in the attack/decay section
@@ -154,6 +162,7 @@ def envelope(t):
                 out = 0
                 do_envelope = False
         writeToDac(out,0x60,0)
+        
 
 # set up timers
 #distance_timer = machine.Timer()
@@ -163,7 +172,6 @@ if (not calibration): # only check the calibration pot if there isn't a hard cod
     calibration_timer.init (period = 100, mode = machine.Timer.PERIODIC, callback = check_calibration_pot)
 envelope_timer = machine.Timer()
 envelope_timer.init (period = 2, mode = machine.Timer.PERIODIC, callback = envelope)
-
 
 # draw to neopixel ring 
 def neopixelDraw (num_pixels, bright):
