@@ -205,7 +205,6 @@ def noteToVoltage(note):
         dacV = 0
     else:
         dacV = int((note-lowest_note)*semitone)
-    print("Vref:",(4.5 + (calibration / 65536)), " note:",note, " note V:",dacV)
     return dacV
 
 # output control voltage for note on CV1
