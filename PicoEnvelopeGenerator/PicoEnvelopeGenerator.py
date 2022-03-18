@@ -216,21 +216,36 @@ def playNote(note):
     start_envelope = True
     return dacV
 
+# MIDI Thru
+def midi_send(cmd, ch, b1, b2):
+    #if(cmd !=0xf8):
+        #print ("Thru ", ch, ":", hex(cmd), ":", b1, ":", b2)
+    if (b2 == -1):
+        uart.write(ustruct.pack("bb",cmd+ch,b1))
+    else:
+        uart.write(ustruct.pack("bbb",cmd+ch,b1,b2))
+        
 # MIDI callback routines
 def doMidiNoteOn(ch, cmd, note, vel):
     global note_on    
     dacV = playNote(note)
     gate.value(1)
     note_on = True
+    midi_send(cmd, ch, note, vel)
 
 def doMidiNoteOff(ch, cmd, note, vel):
     global note_on,stop_envelope
     gate.value(0)
     note_on = False
     stop_envelope = True
-    #playNote(0)
+    midi_send(cmd, ch, note, vel)
 
 def doMidiThru(ch, cmd, d1, d2):
+    #print ("Thru ", ch, ":", hex(cmd), ":", d1, ":", d2)
+    midi_send(cmd, ch, d1, d2)
+    #if (cmd >= 248):
+        #print("mb:",hex(cmd))
+            
     return
 
 # initialise MIDI decoder and set up callbacks
