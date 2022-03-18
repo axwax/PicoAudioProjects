@@ -218,8 +218,6 @@ def playNote(note):
 
 # MIDI Thru
 def midi_send(cmd, ch, b1, b2):
-    #if(cmd !=0xf8):
-        #print ("Thru ", ch, ":", hex(cmd), ":", b1, ":", b2)
     if (b2 == -1):
         uart.write(ustruct.pack("bb",cmd+ch,b1))
     else:
@@ -241,10 +239,7 @@ def doMidiNoteOff(ch, cmd, note, vel):
     midi_send(cmd, ch, note, vel)
 
 def doMidiThru(ch, cmd, d1, d2):
-    #print ("Thru ", ch, ":", hex(cmd), ":", d1, ":", d2)
     midi_send(cmd, ch, d1, d2)
-    #if (cmd >= 248):
-        #print("mb:",hex(cmd))
             
     return
 
