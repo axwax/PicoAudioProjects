@@ -26,14 +26,9 @@ class ADCRead:
         self.r = int(self.chip.read(4) / 4 )        
         
 class OLEDDisplay:
-    def __init__(self, timer, frequency, objA):
+    def __init__(self, timer, frequency, objADC):
         
-        self.a = objA.a
-        self.d = objA.d
-        self.s = objA.s
-        self.r = objA.r
-        self.objA = objA
-        
+        self.objADC = objADC
         self.i2c = self.setup_i2c()
                 
         # set up timer
@@ -48,23 +43,15 @@ class OLEDDisplay:
         self.sustainTime = 40        
 
     def draw_envelope(self):
-        self.objA.update()
-        self.a = self.objA.a
-        self.d = self.objA.d
-        self.s = self.objA.s
-        self.r = self.objA.r        
-        self.oled.fill(0) 
-        self.oled.text("ADSR", 0, 0)
-        self.attackTime = int(self.a*4/self.timeComp)
-        self.decayTime = int(self.d*4/self.timeComp)
-        self.sustainLevel = int(self.s/4/self.ampComp)
-        self.releaseTime = int(self.r*4/self.timeComp)
-        self.oled.line(0, self.yMax, self.attackTime, self.offset, 1)                                     # draw attack line
-        self.oled.line(self.attackTime, self.offset, self.attackTime + self.decayTime, self.yMax - self.sustainLevel, 1)    # draw decay line
-        self.oled.line(self.attackTime + self.decayTime, self.yMax - self.sustainLevel, self.attackTime + self.decayTime + self.sustainTime, self.yMax - self.sustainLevel, 1)    # draw decay line
-        self.oled.line(self.attackTime + self.decayTime + self.sustainTime, self.yMax - self.sustainLevel,self.attackTime + self.decayTime + self.sustainTime + self.releaseTime, self.yMax, 1)    # draw release line
-        print(self.attackTime + self.decayTime + self.sustainTime + self.releaseTime)
-        self.oled.show()
+        self.objADC.update()       
+        attackTime = int(self.objADC.a*4/self.timeComp)
+        decayTime = int(self.objADC.d*4/self.timeComp)
+        sustainLevel = int(self.objADC.s/4/self.ampComp)
+        releaseTime = int(self.objADC.r*4/self.timeComp)
+        self.oled.line(0, self.yMax, attackTime, self.offset, 1) # draw attack line
+        self.oled.line(attackTime, self.offset, attackTime + decayTime, self.yMax - sustainLevel, 1) # draw decay line
+        self.oled.line(attackTime + decayTime, self.yMax - sustainLevel, attackTime + decayTime + self.sustainTime, self.yMax - sustainLevel, 1) # draw decay line
+        self.oled.line(attackTime + decayTime + self.sustainTime, self.yMax - sustainLevel, attackTime + decayTime + self.sustainTime + releaseTime, self.yMax, 1) # draw release line
 
     def setup_i2c(self):
         print("setup i2c")
@@ -72,9 +59,10 @@ class OLEDDisplay:
         return [machine.I2C(0,sda=machine.Pin(8), scl=machine.Pin(9), freq=400000), machine.I2C(1,sda=machine.Pin(2), scl=machine.Pin(3), freq=400000)]
 
     def update(self, tim): # this is run periodically by the timer
-        #print("update")
-        #print(self.a,self.d,self.s,self.r)
+        self.oled.fill(0)
+        self.oled.text("ADSR", 0, 0)
         self.draw_envelope()
+        self.oled.show()
 
 adc = ADCRead()
 ax = OLEDDisplay(machine.Timer(), 100, adc)
