@@ -66,3 +66,8 @@ class OLEDDisplay:
 
 adc = ADCRead()
 ax = OLEDDisplay(machine.Timer(), 100, adc)
+
+
+# pad string [s] with [width] leading zeros
+def zfl(s, width):
+    return '{:0>{w}}'.format(s, w=width)
