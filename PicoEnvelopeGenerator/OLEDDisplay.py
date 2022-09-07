@@ -40,9 +40,10 @@ class DACWrite:
         self.i2c[self.dac[DACnumber][1]].writeto(self.dac[DACnumber][0], buf)
 
 class ADSREnvelope:
-    def __init__(self, timer, frequency, objADC, full_level=4000):
+    def __init__(self, timer, frequency, objADC, objDAC, full_level=4000):
         
         self.objADC = objADC
+        self.objDAC = objDAC        
         self.full_level = full_level
         
         self.envelope_pos = 0
@@ -106,8 +107,8 @@ class ADSREnvelope:
                     out = int(self.rel_array[self.release_pos])
                 else: # we have finished the release phase
                     out = 0
-                    self.do_envelope = False            
-            #writeToDac(out,0x60,0)
+                    self.do_envelope = False
+            self.objDAC.update(out, 3) # output to CV3
         
 class OLEDDisplay:
     def __init__(self, timer, frequency, objADC, i2c):
@@ -146,8 +147,9 @@ class OLEDDisplay:
 
 adc = ADCRead()
 i2c = machine.I2C(0,sda=machine.Pin(8), scl=machine.Pin(9), freq=400000), machine.I2C(1,sda=machine.Pin(2), scl=machine.Pin(3), freq=400000) # set up I2C bus 0 and 1
+dac = DACWrite(i2c)
 oled = OLEDDisplay(machine.Timer(), 100, adc, i2c[0])
-env = ADSREnvelope(machine.Timer(), 10, adc) #2
+env = ADSREnvelope(machine.Timer(), 10, adc, dac) #2
 env.trigger()
 env.stop()
 
