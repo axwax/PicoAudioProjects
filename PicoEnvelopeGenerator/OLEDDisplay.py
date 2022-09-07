@@ -137,6 +137,9 @@ class OLEDDisplay:
 
 adc = ADCRead()
 oled = OLEDDisplay(machine.Timer(), 100, adc)
+env = ADSREnvelope(machine.Timer(), 10, adc) #2
+env.trigger()
+env.stop()
 
 
 # pad string [s] with [width] leading zeros
