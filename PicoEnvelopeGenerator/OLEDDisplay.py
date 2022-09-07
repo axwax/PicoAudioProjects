@@ -24,6 +24,76 @@ class ADCRead:
         self.d   = int(self.chip.read(6) / 4)
         self.s  = int(self.chip.read(5) * 4)
         self.r = int(self.chip.read(4) / 4 )        
+
+class ADSREnvelope:
+    def __init__(self, timer, frequency, objADC, full_level=4000):
+        
+        self.objADC = objADC
+        self.full_level = full_level
+        
+        self.envelope_pos = 0
+        self.release_pos = 0
+        self.do_envelope = False
+        self.stop_envelope = False
+        self.is_playing = False
+        self.note_on = False
+
+        self.ad_array = []
+        self.rel_array = []
+        
+        # set up timer
+        timer.init(period = frequency, callback = self.update)        
+
+    def attack_decay(self): # generate attack/decay array
+        if(self.objADC.a<2):
+            attack_arr = np.full((1, ), self.full_level, dtype=np.uint16)
+        else:
+            attack_arr = np.linspace(0, self.full_level, self.objADC.a, endpoint = False, dtype=np.uint16)
+        if(self.objADC.d<2):
+            decay_arr = np.full((1, ), self.objADC.s, dtype=np.uint16)
+        else:
+            decay_arr = np.linspace(self.full_level, self.objADC.s, self.objADC.d, endpoint = False, dtype=np.uint16)
+        self.ad_array = np.concatenate((attack_arr, decay_arr), axis=0)
+
+    def release(self): # generate release array
+        global aLen, rLen
+        if(self.objADC.r<2):
+            self.rel_array = np.full((1, ), 0, dtype=np.uint16)
+        else:
+            self.rel_array = np.linspace(self.objADC.s, 0, self.objADC.r, dtype=np.uint16)
+    
+    def trigger(self): # trigger the envelope from the start
+        self.envelope_pos = 0
+        self.release_pos = 0
+        self.do_envelope = True
+        self.note_on = True
+        self.objADC.update()
+        self.attack_decay()
+        
+    def stop(self): # initiate release phase of the envelope
+        self.note_on = False
+        self.stop_envelope = True
+        
+    def update(self, tim): # must be run in the loop
+        if (self.do_envelope):
+            if (self.note_on): # we're playing a note, but where are we in the evelope?
+                if (self.envelope_pos<len(self.ad_array)): # we're in the attack/decay section
+                    self.envelope_pos = self.envelope_pos + 1
+                    out = int(self.ad_array[self.envelope_pos-1])
+                else:
+                    out = self.objADC.s # we're in the sustain section                    
+            else: # we're not playing a note any more, are we in the release section?
+                if(self.stop_envelope): # not yet, let's set it up
+                    self.stop_envelope = False
+                    self.release() # self.ad_array[self.envelope_pos-1],self.objADC.r
+                    
+                if (self.release_pos<len(self.rel_array)-1): # we are in the release phase
+                    self.release_pos = self.release_pos + 1
+                    out = int(self.rel_array[self.release_pos])
+                else: # we have finished the release phase
+                    out = 0
+                    self.do_envelope = False            
+            #writeToDac(out,0x60,0)
         
 class OLEDDisplay:
     def __init__(self, timer, frequency, objADC):
@@ -43,7 +113,7 @@ class OLEDDisplay:
         self.sustainTime = 40        
 
     def draw_envelope(self):
-        self.objADC.update()       
+        self.objADC.update()
         attackTime = int(self.objADC.a*4/self.timeComp)
         decayTime = int(self.objADC.d*4/self.timeComp)
         sustainLevel = int(self.objADC.s/4/self.ampComp)
