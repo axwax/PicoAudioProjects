@@ -96,16 +96,16 @@ class ADSREnvelope:
             #writeToDac(out,0x60,0)
         
 class OLEDDisplay:
-    def __init__(self, timer, frequency, objADC):
+    def __init__(self, timer, frequency, objADC, i2c):
         
         self.objADC = objADC
-        self.i2c = self.setup_i2c()
+        self.i2c = i2c
                 
         # set up timer
         timer.init(period = frequency, callback = self.update)
         
         # set up oled
-        self.oled = ssd1306.SSD1306_I2C(128, 64, self.i2c[0])
+        self.oled = ssd1306.SSD1306_I2C(128, 64, self.i2c)
         self.offset = 16
         self.timeComp = 35
         self.ampComp = 21.5
@@ -125,18 +125,14 @@ class OLEDDisplay:
         self.oled.line(attackTime + decayTime, self.yMax - sustainLevel, attackTime + decayTime + self.sustainTime, self.yMax - sustainLevel, 1) # draw decay line
         self.oled.line(attackTime + decayTime + self.sustainTime, self.yMax - sustainLevel, attackTime + decayTime + self.sustainTime + releaseTime, self.yMax, 1) # draw release line
 
-    def setup_i2c(self):
-        print("setup i2c")
-        # set up I2C bus 0 and 1
-        return [machine.I2C(0,sda=machine.Pin(8), scl=machine.Pin(9), freq=400000), machine.I2C(1,sda=machine.Pin(2), scl=machine.Pin(3), freq=400000)]
-
     def update(self, tim): # this is run periodically by the timer
         self.oled.fill(0)
         self.draw_envelope()
         self.oled.show()
 
 adc = ADCRead()
-oled = OLEDDisplay(machine.Timer(), 100, adc)
+i2c = machine.I2C(0,sda=machine.Pin(8), scl=machine.Pin(9), freq=400000), machine.I2C(1,sda=machine.Pin(2), scl=machine.Pin(3), freq=400000) # set up I2C bus 0 and 1
+oled = OLEDDisplay(machine.Timer(), 100, adc, i2c[0])
 env = ADSREnvelope(machine.Timer(), 10, adc) #2
 env.trigger()
 env.stop()
