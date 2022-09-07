@@ -25,6 +25,20 @@ class ADCRead:
         self.s  = int(self.chip.read(5) * 4)
         self.r = int(self.chip.read(4) / 4 )        
 
+class DACWrite:
+    def __init__(self, i2c):
+        self.i2c = i2c
+        self.dac = np.array([[0x62,1],  # blue
+                             [0x63,1],  # green
+                             [0x60,0],  # brown
+                             [0x61,0]], dtype=np.uint8) # yellow        
+    # write to dac
+    def update(self, value, DACnumber):
+        buf=bytearray(2)
+        buf[0]=(value >> 8) & 0xFF
+        buf[1]=value & 0xFF
+        self.i2c[self.dac[DACnumber][1]].writeto(self.dac[DACnumber][0], buf)
+
 class ADSREnvelope:
     def __init__(self, timer, frequency, objADC, full_level=4000):
         
