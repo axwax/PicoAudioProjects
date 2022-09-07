@@ -33,11 +33,11 @@ class DACWrite:
                              [0x60,0],  # brown
                              [0x61,0]], dtype=np.uint8) # yellow        
     # write to dac
-    def update(self, value, DACnumber):
+    def update(self, value, dac_number):
         buf=bytearray(2)
         buf[0]=(value >> 8) & 0xFF
         buf[1]=value & 0xFF
-        self.i2c[self.dac[DACnumber][1]].writeto(self.dac[DACnumber][0], buf)
+        self.i2c[self.dac[dac_number][1]].writeto(self.dac[dac_number][0], buf)
 
 class ADSREnvelope:
     def __init__(self, timer, frequency, objADC, objDAC, full_level=4000):
