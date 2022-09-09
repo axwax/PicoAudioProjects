@@ -50,7 +50,6 @@ class ADSREnvelope:
         self.release_pos = 0
         self.do_envelope = False
         self.stop_envelope = False
-        self.is_playing = False
         self.note_on = False
 
         self.ad_array = []
@@ -144,15 +143,6 @@ class OLEDDisplay:
         self.oled.fill(0)
         self.draw_envelope()
         self.oled.show()
-
-adc = ADCRead()
-i2c = machine.I2C(0,sda=machine.Pin(8), scl=machine.Pin(9), freq=400000), machine.I2C(1,sda=machine.Pin(2), scl=machine.Pin(3), freq=400000) # set up I2C bus 0 and 1
-dac = DACWrite(i2c)
-oled = OLEDDisplay(machine.Timer(), 100, adc, i2c[0])
-env = ADSREnvelope(machine.Timer(), 10, adc, dac) #2
-env.trigger()
-env.stop()
-
 
 # pad string [s] with [width] leading zeros
 def zfl(s, width):
