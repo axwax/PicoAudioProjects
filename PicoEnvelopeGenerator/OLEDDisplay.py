@@ -108,7 +108,7 @@ class ADSREnvelope:
                 else: # we have finished the release phase
                     out = 0
                     self.do_envelope = False
-            self.objDAC.update(out, 3) # output to CV3
+            self.objDAC.update(out, 1) # output to CV2
         
 class OLEDDisplay:
     def __init__(self, timer, frequency, objADC, i2c):
