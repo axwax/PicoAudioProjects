@@ -3,35 +3,12 @@ import ustruct
 import SimpleMIDIDecoder
 from OLEDDisplay import *
 
-# set up global variables
-calibration = 35500    # calibration offset for reference voltage
-lowest_note = 40   # which MIDI note number corresponds to 0V CV
-
 # set up gate pin
 gate = machine.Pin(27, machine.Pin.OUT)
 gate.value(0)
 
 # initialise serial MIDI ports
 uart = machine.UART(0,31250,tx=machine.Pin(12),rx=machine.Pin(13)) # UART0 on pins 12,13
-
-
-# Calculate the control voltage
-def noteToVoltage(note):
-    reference_voltage = (4.5 + (calibration / 65536)) # from 4.5V to 5.5V
-    mv = 4096 / reference_voltage / 1000 # value for one mV
-    semitone = 83.33 * mv # one semitone is 1V/12 = 83.33mV
-    if(note == 0):
-        dacV = 0
-    else:
-        dacV = int((note-lowest_note)*semitone)
-    return dacV
-
-# output control voltage for note on CV1
-def playNote(note):
-    global start_envelope, dac
-    dacV = noteToVoltage(note)
-    dac.update(dacV, 0) # blue
-    return dacV
 
 # MIDI Thru
 def midi_send(cmd, ch, b1, b2):
@@ -42,8 +19,8 @@ def midi_send(cmd, ch, b1, b2):
         
 # MIDI callback routines
 def doMidiNoteOn(ch, cmd, note, vel):
-    global note_on, current_note, env
-    dacV = playNote(note)
+    global note_on, current_note, dac, env
+    dacV = dac.playNote(note)
     gate.value(1)
     note_on = True
     current_note = note

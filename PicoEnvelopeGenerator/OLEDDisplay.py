@@ -26,7 +26,9 @@ class ADCRead:
         self.r = int(self.chip.read(4) / 4 )        
 
 class DACWrite:
-    def __init__(self, i2c):
+    def __init__(self, i2c, calibration = 35500, lowest_note = 40):
+        self.calibration = calibration # calibration offset for reference voltage
+        self.lowest_note = lowest_note   # which MIDI note number corresponds to 0V CV
         self.i2c = i2c
         self.dac = np.array([[0x62,1],  # blue
                              [0x63,1],  # green
@@ -38,6 +40,22 @@ class DACWrite:
         buf[0]=(value >> 8) & 0xFF
         buf[1]=value & 0xFF
         self.i2c[self.dac[dac_number][1]].writeto(self.dac[dac_number][0], buf)
+    # Calculate the control voltage
+    def noteToVoltage(self, note):
+        reference_voltage = (4.5 + (self.calibration / 65536)) # from 4.5V to 5.5V
+        mv = 4096 / reference_voltage / 1000 # value for one mV
+        semitone = 83.33 * mv # one semitone is 1V/12 = 83.33mV
+        if(note == 0):
+            dacV = 0
+        else:
+            dacV = int((note-self.lowest_note)*semitone)
+        return dacV
+    # output control voltage for note on CV1
+    def playNote(self,note):
+        dacV = self.noteToVoltage(note)
+        self.update(dacV, 0) # blue
+        return dacV
+
 
 class ADSREnvelope:
     def __init__(self, timer, frequency, objADC, objDAC, full_level=4000):
