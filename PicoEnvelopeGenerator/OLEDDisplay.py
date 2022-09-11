@@ -92,7 +92,7 @@ class ADSREnvelope:
         if(self.objADC.r<2):
             self.rel_array = np.full((1, ), 0, dtype=np.uint16)
         else:
-            self.rel_array = np.linspace(self.objADC.s, 0, self.objADC.r, dtype=np.uint16)
+            self.rel_array = np.linspace(self.ad_array[self.envelope_pos-1], 0, self.objADC.r, dtype=np.uint16)
     
     def trigger(self): # trigger the envelope from the start
         self.envelope_pos = 0
