@@ -3,6 +3,8 @@ import ustruct
 import SimpleMIDIDecoder
 from OLEDDisplay import *
 
+note_on = False
+
 # set up gate pin
 gate = machine.Pin(27, machine.Pin.OUT)
 gate.value(0)
@@ -20,12 +22,13 @@ def midi_send(cmd, ch, b1, b2):
 # MIDI callback routines
 def doMidiNoteOn(ch, cmd, note, vel):
     global note_on, current_note, dac, env
-    dacV = dac.playNote(note)
-    gate.value(1)
-    note_on = True
-    current_note = note
-    env.trigger()
-    #print("note:",note)
+    if(not note_on):
+        dacV = dac.playNote(note)
+        gate.value(1)
+        note_on = True
+        current_note = note
+        env.trigger()
+        print("note:",note)
     midi_send(cmd, ch, note, vel)
 
 def doMidiNoteOff(ch, cmd, note, vel):
