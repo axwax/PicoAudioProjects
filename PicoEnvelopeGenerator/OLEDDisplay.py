@@ -146,8 +146,8 @@ class OLEDDisplay:
 
     def draw_envelope(self):
         self.objADC.update()
-        self.oled.text(" A   D   S    R", 0, 0)
-        self.oled.text(zfl(str(self.objADC.a),3) + " " + zfl(str(self.objADC.d),3) + " " + zfl(str(self.objADC.s),4) + " " + zfl(str(self.objADC.r),3), 0, 8)
+        self.oled.text("A  D  S  R", 0, 0)
+        self.oled.text(zfl(str(int(self.objADC.a/4)),2) + " " + zfl(str(int(self.objADC.d/4)),2) + " " + zfl(str(int(self.objADC.s/64)),2) + " " + zfl(str(int(self.objADC.r/4)),2), 0, 8)
         attackTime = int(self.objADC.a*4/self.timeComp)
         decayTime = int(self.objADC.d*4/self.timeComp)
         sustainLevel = int(self.objADC.s/4/self.ampComp)
